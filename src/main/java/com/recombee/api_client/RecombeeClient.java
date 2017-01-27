@@ -1,39 +1,42 @@
 package com.recombee.api_client;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-import java.text.SimpleDateFormat;
-
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
-import com.mashape.unirest.request.HttpRequest;
-
-
-import org.apache.commons.codec.binary.Hex;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-
-import java.util.List;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.google.appengine.api.urlfetch.FetchOptions;
+import com.google.appengine.api.urlfetch.HTTPHeader;
+import com.google.appengine.api.urlfetch.HTTPMethod;
+import com.google.appengine.api.urlfetch.HTTPRequest;
+import com.google.appengine.api.urlfetch.HTTPResponse;
+import com.google.appengine.api.urlfetch.URLFetchService;
+import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 
 import com.recombee.api_client.api_requests.Request;
+import com.recombee.api_client.api_requests.Batch;
 import com.recombee.api_client.exceptions.ApiException;
 import com.recombee.api_client.exceptions.ApiTimeoutException;
 import com.recombee.api_client.exceptions.ResponseException;
 import com.recombee.api_client.util.NetworkApplicationProtocol;
-
-import com.recombee.api_client.bindings.Recommendation;
-import com.recombee.api_client.api_requests.Batch;
 
 /* Start of the generated code */
 import com.recombee.api_client.bindings.*;
@@ -68,16 +71,19 @@ import com.recombee.api_client.api_requests.ItemBasedRecommendation;
 */
 public class RecombeeClient {
 
+	private static final Logger logger = Logger.getLogger("Recombee");
     String databaseId;
     String token;
 
     NetworkApplicationProtocol defaultProtocol = NetworkApplicationProtocol.HTTP;
     String baseUri = "rapi.recombee.com";
     ObjectMapper mapper;
+    URLFetchService fetcher;
 
     final int BATCH_MAX_SIZE = 10000; //Maximal number of requests within one batch request
 
     public RecombeeClient(String databaseId, String token) {
+    	this.fetcher = URLFetchServiceFactory.getURLFetchService();
         this.databaseId = databaseId;
         this.token = token;
         this.mapper = new ObjectMapper();
@@ -101,7 +107,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, Item[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListItems data to Recombee", e);
          }
          return null;
     }
@@ -111,7 +117,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, PropertyInfo.class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send GetItemPropertyInfo data to Recombee", e);
          }
          return null;
     }
@@ -121,7 +127,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, PropertyInfo[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListItemProperties data to Recombee", e);
          }
          return null;
     }
@@ -131,7 +137,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, Series[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListSeries data to Recombee", e);
          }
          return null;
     }
@@ -141,7 +147,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, SeriesItem[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListSeriesItems data to Recombee", e);
          }
          return null;
     }
@@ -151,7 +157,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, Group[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListGroups data to Recombee", e);
          }
          return null;
     }
@@ -161,7 +167,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, GroupItem[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListGroupItems data to Recombee", e);
          }
          return null;
     }
@@ -171,7 +177,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, User[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListUsers data to Recombee", e);
          }
          return null;
     }
@@ -181,7 +187,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, PropertyInfo.class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send GetUserPropertyInfo data to Recombee", e);
          }
          return null;
     }
@@ -191,7 +197,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, PropertyInfo[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListUserProperties data to Recombee", e);
          }
          return null;
     }
@@ -201,7 +207,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, DetailView[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListItemDetailViews data to Recombee", e);
          }
          return null;
     }
@@ -211,7 +217,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, DetailView[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListUserDetailViews data to Recombee", e);
          }
          return null;
     }
@@ -221,7 +227,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, Purchase[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListItemPurchases data to Recombee", e);
          }
          return null;
     }
@@ -231,7 +237,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, Purchase[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListUserPurchases data to Recombee", e);
          }
          return null;
     }
@@ -241,7 +247,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, Rating[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListItemRatings data to Recombee", e);
          }
          return null;
     }
@@ -251,7 +257,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, Rating[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListUserRatings data to Recombee", e);
          }
          return null;
     }
@@ -261,7 +267,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, CartAddition[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListItemCartAdditions data to Recombee", e);
          }
          return null;
     }
@@ -271,7 +277,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, CartAddition[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListUserCartAdditions data to Recombee", e);
          }
          return null;
     }
@@ -281,7 +287,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, Bookmark[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListItemBookmarks data to Recombee", e);
          }
          return null;
     }
@@ -291,7 +297,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, Bookmark[].class);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send ListUserBookmarks data to Recombee", e);
          }
          return null;
     }
@@ -508,7 +514,7 @@ public class RecombeeClient {
             return result;
 
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send Batch data to Recombee", e);
         }
         return null;
     }
@@ -566,7 +572,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, typeRef);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send GetItemValues data to Recombee", e);
         }
         return null;
     }
@@ -580,7 +586,7 @@ public class RecombeeClient {
         try {
             return this.mapper.readValue(responseStr, typeRef);
         } catch (IOException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#send]Unable to send GetUserValues data to Recombee", e);
         }
         return null;
     }
@@ -610,7 +616,7 @@ public class RecombeeClient {
                     recomms[i] = new Recommendation((String)valsArray[i].get("itemId"), valsArray[i]);
                 return recomms;
             } catch (IOException e2) {
-                e2.printStackTrace();
+            	logger.log(Level.SEVERE, "[#sendRecomm]Unable to send to Recombee", e);
             }
          }
          return null;
@@ -625,37 +631,29 @@ public class RecombeeClient {
         String signedUri = signUrl(processRequestUri(request));
         String protocolStr = request.getEnsureHttps() ? "https" : this.defaultProtocol.name().toLowerCase();
         String uri = protocolStr + "://" + this.baseUri + "/" + signedUri;
-        Unirest.setTimeouts(request.getTimeout(), request.getTimeout());
-
-        HttpRequest httpRequest = null;
-        switch (request.getHTTPMethod()) {
-            case GET:
-                httpRequest = get(uri);
-                break;
-            case POST:
-                httpRequest = post(uri, request);
-                break;
-            case PUT:
-                httpRequest = put(uri);
-                break;
-            case DELETE:
-                httpRequest = delete(uri);
-                break;
-        }
-
         try {
-            HttpResponse<String> response = httpRequest.asString();
+	        HTTPRequest httpRequest = null;
+	        switch (request.getHTTPMethod()) {
+	            case GET:
+	                httpRequest = get(uri, request);
+	                break;
+	            case POST:
+	                httpRequest = post(uri, request);
+	                break;
+	            case PUT:
+	                httpRequest = put(uri, request);
+	                break;
+	            case DELETE:
+	                httpRequest = delete(uri, request);
+	                break;
+	        }
+            HTTPResponse response = fetcher.fetch(httpRequest); 
             checkErrors(response, request);
-            return response.getBody();
-        } catch (UnirestException e) {
-            if(e.getCause() != null && (e.getCause() instanceof org.apache.http.conn.ConnectTimeoutException
-                    ||e.getCause() instanceof java.net.SocketTimeoutException)) {
-                throw new ApiTimeoutException(request);
-            }
-            e.printStackTrace();
+            return new String(response.getContent(), Charset.forName("UTF-8"));
+        } catch (IOException e) {
+        	logger.log(Level.SEVERE, "[#sendRequest]", e);
+            throw new ApiTimeoutException(request);
         }
-
-        return null;
     }
 
     private String signUrl(String url) {
@@ -666,12 +664,10 @@ public class RecombeeClient {
             SecretKeySpec secret = new SecretKeySpec(this.token.getBytes(), "HmacSHA1");
             mac.init(secret);
             byte[] rawHmac = mac.doFinal(url.getBytes());
-            String sign = Hex.encodeHexString(rawHmac);
+            String sign = encodeHexString(rawHmac);
             return url + "&hmac_sign=" + sign;
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+        	logger.log(Level.SEVERE, "[#signUrl] While generating hmacSHA1", e);
         }
         return null;
     }
@@ -694,37 +690,71 @@ public class RecombeeClient {
         try {
             return URLEncoder.encode(val.toString(), "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#formatQueryParameterValue]", e);
             return null;
         }
     }
 
-    private HttpRequest get(String url) {
-        return Unirest.get(url);
+    private HTTPRequest get(String url, Request req) throws MalformedURLException {
+    	return new HTTPRequest(new URL(url), HTTPMethod.GET, getFetchOptions(req));
     }
 
-    private HttpRequest put(String url) {
-        return Unirest.put(url);
+    private HTTPRequest put(String url, Request req) throws MalformedURLException {
+    	return new HTTPRequest(new URL(url), HTTPMethod.PUT, getFetchOptions(req));
     }
 
-    private HttpRequest delete(String url) {
-        return Unirest.delete(url);
+    private HTTPRequest delete(String url, Request req) throws MalformedURLException {
+    	return new HTTPRequest(new URL(url), HTTPMethod.DELETE, getFetchOptions(req));
     }
 
-    private HttpRequest post(String url, Request req) {
+    private HTTPRequest post(String url, Request req) throws MalformedURLException {
         try {
-            String json = this.mapper.writeValueAsString(req.getBodyParameters());
-            return Unirest.post(url).header("Content-Type", "application/json").
-                    body(json.getBytes()).getHttpRequest();
+        	HTTPRequest request = new HTTPRequest(new URL(url), HTTPMethod.DELETE, getFetchOptions(req));
+        	request.setHeader(new HTTPHeader("Content-Type", "application/json"));
+        	String json = this.mapper.writeValueAsString(req.getBodyParameters());
+        	request.setPayload(json.getBytes(Charset.forName("UTF-8")));
+            return request;
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+        	logger.log(Level.SEVERE, "[#post]", e);
         }
         return null;
     }
 
-    private void checkErrors(HttpResponse<String> response, Request request) throws ResponseException {
-        if(response.getStatus() == 200 || response.getStatus() == 201) return;
-        throw new ResponseException(request, response.getStatus(), response.getBody());
+    private void checkErrors(HTTPResponse response, Request request) throws ResponseException {
+        if(response.getResponseCode() == 200 || response.getResponseCode() == 201) return;
+        throw new ResponseException(request, response.getResponseCode(), new String(response.getContent()));
 
     }
+    
+    private static FetchOptions getFetchOptions(Request req){
+		FetchOptions fetchOptions = FetchOptions.Builder.withDefaults();
+		fetchOptions.setDeadline((double)req.getTimeout());
+		return fetchOptions;
+	}
+    
+    /**
+     * Ported from commons-codec-1.9 Hex.java
+     * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
+     * The returned array will be double the length of the passed array, as it takes two characters to represent any
+     * given byte.
+     *
+     * @param data
+     *            a byte[] to convert to Hex characters
+     * @param toDigits
+     *            the output alphabet
+     * @return A char[] containing hexadecimal characters
+     * @since 1.4
+     */
+    private static String encodeHexString(final byte[] data) {
+        final int l = data.length;
+        final char[] out = new char[l << 1];
+        // two characters form the hex value.
+        for (int i = 0, j = 0; i < l; i++) {
+            out[j++] = DIGITS_LOWER[(0xF0 & data[i]) >>> 4];
+            out[j++] = DIGITS_LOWER[0x0F & data[i]];
+        }
+        return new String(out);
+    }
+    
+    private static final char[] DIGITS_LOWER = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 }
